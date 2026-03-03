@@ -3,83 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EOS - Coach</title>
+    <title>EOS Coach</title>
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: #f8fafc; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { padding: 15px; background: #1e293b; text-align: center; border-bottom: 2px solid #334155; color: #10b981; font-weight: bold; }
-        #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { padding: 12px 16px; border-radius: 12px; max-width: 85%; line-height: 1.5; word-wrap: break-word; }
-        .user { background: #3b82f6; align-self: flex-end; color: white; border-bottom-right-radius: 2px; }
-        .ai { background: #334155; align-self: flex-start; border-bottom-left-radius: 2px; white-space: pre-wrap; }
-        #input-area { display: flex; padding: 20px; background: #1e293b; gap: 10px; border-top: 1px solid #334155; }
-        input { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #334155; color: white; outline: none; font-size: 1rem; }
-        button { background: #10b981; border: none; padding: 12px 20px; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        body { font-family: sans-serif; background: #0f172a; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px; border-radius: 10px; max-width: 80%; }
+        .user { background: #3b82f6; align-self: flex-end; }
+        .ai { background: #334155; align-self: flex-start; }
+        #input-area { display: flex; padding: 20px; background: #1e293b; gap: 10px; }
+        input { flex: 1; padding: 10px; border-radius: 5px; border: none; }
+        button { padding: 10px; background: #10b981; color: white; border: none; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <header>EOS | Coach de Mattéo</header>
-    <div id="chat"><div class="msg ai">Bonjour Mattéo. Quel est notre levier aujourd'hui ?</div></div>
+    <div id="chat"><div class="msg ai">Eos est prêt, Mattéo. Quel est l'objectif ?</div></div>
     <div id="input-area">
-        <input type="text" id="user-input" placeholder="Parle à Eos..." autocomplete="off">
-        <button id="send-btn">Action</button>
+        <input type="text" id="user-input" placeholder="Ecris ici...">
+        <button id="btn">Action</button>
     </div>
 
     <script>
-        const API_KEY = "AIzaSyDfEHkt8kNfdwWvP7W4rM2ntfvM2GRTDF4"; // <--- REMPLACE ICI
-        const systemInstruction = "Tu es Eos, coach stratégique. Aide Mattéo à générer des revenus hors-Calédonie.";
+        // METS TA CLÉ ICI
+        const API_KEY = "AIzaSyDfEHkt8kNfdwWvP7W4rM2ntfvM2GRTDF4"; 
 
-        // Liste de modèles à tester par ordre de probabilité
-        const models = ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-pro"];
-
-        document.getElementById('send-btn').onclick = sendMessage;
-        document.getElementById('user-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
-
-        async function sendMessage() {
+        document.getElementById('btn').onclick = async () => {
             const input = document.getElementById('user-input');
             const chat = document.getElementById('chat');
-            const text = input.value.trim();
-            if (!text) return;
+            const text = input.value;
+            if(!text) return;
 
             chat.innerHTML += `<div class="msg user">${text}</div>`;
             input.value = "";
-            chat.scrollTop = chat.scrollHeight;
 
-            let success = false;
+            // ON UTILISE LE MODÈLE LE PLUS STABLE POUR 2026
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
-            // On boucle sur les modèles jusqu'à ce qu'un fonctionne
-            for (let modelName of models) {
-                if (success) break;
-                
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
-
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: systemInstruction + "\n\nMattéo: " + text }] }]
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (!data.error) {
-                        const responseText = data.candidates[0].content.parts[0].text;
-                        chat.innerHTML += `<div class="msg ai">${responseText}</div>`;
-                        success = true;
-                    } else {
-                        console.log(`Modèle ${modelName} a échoué, essai du suivant...`);
-                    }
-                } catch (e) {
-                    console.error("Erreur réseau pour " + modelName);
-                }
-            }
-
-            if (!success) {
-                chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Eos : Désolé, aucun modèle ne répond. Vérifie ta clé ou tes quotas Google AI Studio.</div>`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Réponds en tant que coach business : " + text }] }] })
+                });
+                const data = await response.json();
+                const aiText = data.candidates[0].content.parts[0].text;
+                chat.innerHTML += `<div class="msg ai">${aiText}</div>`;
+            } catch (e) {
+                chat.innerHTML += `<div class="msg ai" style="color:red;">Erreur : Vérifie ta clé ou le modèle.</div>`;
             }
             chat.scrollTop = chat.scrollHeight;
-        }
+        };
     </script>
 </body>
 </html>
