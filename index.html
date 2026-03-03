@@ -18,15 +18,22 @@
 </head>
 <body>
     <header>EOS | STRATÉGIE MATTÉO</header>
-    <div id="chat"><div class="msg ai">VPN activé. Je suis prêt, Mattéo. Quel est notre premier objectif de revenus ?</div></div>
+    <div id="chat"><div class="msg ai">VPN Actif ? Clé configurée ? Je t'écoute.</div></div>
     <div id="input-area">
         <input type="text" id="user-input" placeholder="Parle à Eos...">
         <button id="btn">ACTION</button>
     </div>
 
     <script>
-        // REMPLACE BIEN PAR TA CLÉ COMPLETE (Celle qui finit par TDF4)
-        const API_KEY = "AIzaSyDwnY15CqSj2v-0iYOmZ1AuR7KsqAKbz4M"; 
+        // RÉCUPÉRATION SÉCURISÉE DE LA CLÉ
+        let API_KEY = localStorage.getItem('EOS_KEY');
+
+        if (!API_KEY) {
+            API_KEY = prompt("Veuillez coller votre nouvelle clé API Gemini (AIza...) :");
+            if (API_KEY) {
+                localStorage.setItem('EOS_KEY', API_KEY);
+            }
+        }
 
         const btn = document.getElementById('btn');
         const input = document.getElementById('user-input');
@@ -34,13 +41,12 @@
 
         btn.onclick = async () => {
             const text = input.value.trim();
-            if(!text) return;
+            if(!text || !API_KEY) return;
 
             chat.innerHTML += `<div class="msg user">${text}</div>`;
             input.value = "";
             chat.scrollTop = chat.scrollHeight;
 
-            // NOUVELLE URL 2026 : Modèle 2.0 Flash sur route v1beta
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
             try {
@@ -48,20 +54,24 @@
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Tu es Eos, coach business. Aide Mattéo à générer des revenus hors-Calédonie. Réponds à : " + text }] }]
+                        contents: [{ parts: [{ text: "Tu es Eos, coach business stratégique de Mattéo. Aide-le à générer des revenus hors-Calédonie. Réponds à : " + text }] }]
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.error) {
+                    if(data.error.message.includes("leaked")) {
+                        localStorage.removeItem('EOS_KEY');
+                        alert("Cette clé est grillée. Supprime-la sur AI Studio et crée-en une nouvelle.");
+                    }
                     chat.innerHTML += `<div class="msg ai" style="color:#f87171;">Google dit : ${data.error.message}</div>`;
                 } else {
                     const aiText = data.candidates[0].content.parts[0].text;
                     chat.innerHTML += `<div class="msg ai">${aiText}</div>`;
                 }
             } catch (e) {
-                chat.innerHTML += `<div class="msg ai" style="color:#f87171;">Erreur de connexion. Garde ton VPN actif.</div>`;
+                chat.innerHTML += `<div class="msg ai" style="color:#f87171;">Erreur réseau. Active ton VPN.</div>`;
             }
             chat.scrollTop = chat.scrollHeight;
         };
