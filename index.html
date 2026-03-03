@@ -92,11 +92,9 @@
 
     <script>
         // --- CONFIGURATION ---
-        // Remplace AIza... par ta clé API Gemini
-        const API_KEY = "AIzaSyDgzIQvaulxJAhZBPBiHP4MJpWPb1fXw9I"; 
+        const API_KEY = "TA_CLE_API_ICI"; // Mets ta clé ici
         
-        // Instructions pour la personnalité du coach
-        const systemInstruction = "Tu es Eos, coach stratégique de Mattéo. Ton but : l'aider à générer des revenus indépendants du marché de Nouvelle-Calédonie pour réinvestir. Tu es direct, expert en finance et business en ligne. Ne réponds pas comme une IA générique, sois un mentor.";
+        const systemInstruction = "Tu es Eos, coach stratégique de Mattéo. Ton but : l'aider à générer des revenus indépendants du marché de Nouvelle-Calédonie pour réinvestir. Tu es direct, expert en finance et business en ligne.";
 
         async function sendMessage() {
             const input = document.getElementById('user-input');
@@ -105,14 +103,12 @@
             
             if (!text) return;
 
-            // 1. Afficher le message de Mattéo
             chat.innerHTML += `<div class="msg user">${text}</div>`;
             input.value = "";
             chat.scrollTop = chat.scrollHeight;
 
-            // 2. URL de l'API Gemini (Version 1.5 Flash - Nom corrigé)
-            // Note: Si 'gemini-1.5-flash' échoue encore, on utilise 'gemini-pro'
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+            // URL CORRIGÉE : Version v1 et modèle gemini-pro
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`;
 
             try {
                 const response = await fetch(url, {
@@ -130,27 +126,22 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    // Si erreur de modèle, on affiche le détail
-                    chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Erreur API : ${data.error.message}</div>`;
-                } else {
-                    // Extraction de la réponse
+                    chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Erreur : ${data.error.message}</div>`;
+                } else if (data.candidates && data.candidates[0].content) {
                     const responseText = data.candidates[0].content.parts[0].text;
                     chat.innerHTML += `<div class="msg ai">${responseText}</div>`;
+                } else {
+                    chat.innerHTML += `<div class="msg ai">Eos a eu une absence, réessaie.</div>`;
                 }
             } catch (e) {
-                chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Désolé, problème de connexion.</div>`;
-                console.error(e);
+                chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Problème de connexion.</div>`;
             }
             
-            // Toujours scroller vers le bas
             chat.scrollTop = chat.scrollHeight;
         }
 
-        // Permettre d'envoyer avec la touche "Entrée"
         document.getElementById('user-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+            if (e.key === 'Enter') sendMessage();
         });
     </script>
 </body>
