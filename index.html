@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EOS - Coach Stratégique</title>
+    <title>EOS - Coach</title>
     <style>
         body { font-family: sans-serif; background: #0f172a; color: #f8fafc; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         header { padding: 15px; background: #1e293b; text-align: center; border-bottom: 2px solid #334155; color: #10b981; font-weight: bold; }
@@ -18,60 +18,65 @@
 </head>
 <body>
     <header>EOS | Coach de Mattéo</header>
-    <div id="chat">
-        <div class="msg ai">Bonjour Mattéo. Je suis prêt. Quel est notre premier levier pour tes revenus hors-Calédonie ?</div>
-    </div>
+    <div id="chat"><div class="msg ai">Bonjour Mattéo. Quel est notre levier aujourd'hui ?</div></div>
     <div id="input-area">
         <input type="text" id="user-input" placeholder="Parle à Eos..." autocomplete="off">
         <button id="send-btn">Action</button>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const API_KEY = "AIzaSyDfEHkt8kNfdwWvP7W4rM2ntfvM2GRTDF4"; 
-        const systemInstruction = "Tu es Eos, coach stratégique de Mattéo. Ton but : l'aider à générer des revenus indépendants du marché de Nouvelle-Calédonie pour réinvestir. Tu es direct et expert.";
+        const API_KEY = "AIzaSyDfEHkt8kNfdwWvP7W4rM2ntfvM2GRTDF4"; // <--- REMPLACE ICI
+        const systemInstruction = "Tu es Eos, coach stratégique. Aide Mattéo à générer des revenus hors-Calédonie.";
 
-        // On utilise l'écouteur d'événement au lieu du 'onclick' dans le HTML pour éviter les erreurs
-        document.getElementById('send-btn').addEventListener('click', sendMessage);
-        document.getElementById('user-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendMessage();
-        });
+        // Liste de modèles à tester par ordre de probabilité
+        const models = ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-pro"];
+
+        document.getElementById('send-btn').onclick = sendMessage;
+        document.getElementById('user-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
 
         async function sendMessage() {
             const input = document.getElementById('user-input');
             const chat = document.getElementById('chat');
             const text = input.value.trim();
-            
             if (!text) return;
 
             chat.innerHTML += `<div class="msg user">${text}</div>`;
             input.value = "";
             chat.scrollTop = chat.scrollHeight;
 
-            // Route la plus stable
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+            let success = false;
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: systemInstruction + "\n\nMattéo: " + text }] }]
-                    })
-                });
+            // On boucle sur les modèles jusqu'à ce qu'un fonctionne
+            for (let modelName of models) {
+                if (success) break;
+                
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
-                const data = await response.json();
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: systemInstruction + "\n\nMattéo: " + text }] }]
+                        })
+                    });
 
-                if (data.error) {
-                    chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Erreur : ${data.error.message}</div>`;
-                } else if (data.candidates && data.candidates[0].content) {
-                    const responseText = data.candidates[0].content.parts[0].text;
-                    chat.innerHTML += `<div class="msg ai">${responseText}</div>`;
-                } else {
-                    chat.innerHTML += `<div class="msg ai">Eos ne répond pas. Vérifie tes quotas.</div>`;
+                    const data = await response.json();
+
+                    if (!data.error) {
+                        const responseText = data.candidates[0].content.parts[0].text;
+                        chat.innerHTML += `<div class="msg ai">${responseText}</div>`;
+                        success = true;
+                    } else {
+                        console.log(`Modèle ${modelName} a échoué, essai du suivant...`);
+                    }
+                } catch (e) {
+                    console.error("Erreur réseau pour " + modelName);
                 }
-            } catch (e) {
-                chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Erreur réseau ou syntaxe.</div>`;
+            }
+
+            if (!success) {
+                chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Eos : Désolé, aucun modèle ne répond. Vérifie ta clé ou tes quotas Google AI Studio.</div>`;
             }
             chat.scrollTop = chat.scrollHeight;
         }
