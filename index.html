@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EOS - Assistant Stratégique</title>
+    <title>EOS Assistant</title>
     <style>
         body { font-family: sans-serif; background: #0f172a; color: #f8fafc; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         header { padding: 15px; background: #1e293b; text-align: center; border-bottom: 2px solid #334155; color: #10b981; font-weight: bold; }
@@ -21,7 +21,7 @@
     <header>EOS | STRATÉGIE MATTÉO</header>
     
     <div id="chat">
-        <div class="msg ai">Système EOS initialisé. Mattéo, si la fenêtre s'ouvre, colle ta nouvelle clé. Assure-toi que Proton VPN est sur 'USA' ou 'France'.</div>
+        <div class="msg ai">Connexion établie. Mattéo, si tu vois ce message, le code est chargé. N'oublie pas ton VPN (Proton VPN) pour contourner le blocage régional.</div>
     </div>
 
     <div id="input-area">
@@ -30,12 +30,12 @@
     </div>
 
     <script>
-        // Gestion sécurisée de la clé
+        // Gestion de la clé via stockage local
         var storageName = 'EOS_ACCESS_KEY';
         var apiKey = localStorage.getItem(storageName);
 
         if (!apiKey) {
-            var inputKey = prompt('Configuration : Colle ta clé API Gemini (AIza...) :');
+            var inputKey = prompt('Configuration : Colle ta nouvelle clé API Gemini :');
             if (inputKey) {
                 apiKey = inputKey.trim();
                 localStorage.setItem(storageName, apiKey);
@@ -55,4 +55,57 @@
             inputField.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Construction de l'URL sécurisée pour
+            // NOM DU MODÈLE CORRIGÉ : On utilise la version technique précise
+            var modelName = 'gemini-1.5-flash-001';
+            var endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent?key=' + apiKey;
+
+            try {
+                var response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ 
+                            parts: [{ 
+                                text: "Tu es Eos, coach business stratégique. Ton but est d'aider Mattéo à générer des revenus hors-Calédonie. Réponds à : " + message 
+                            }] 
+                        }]
+                    })
+                });
+
+                var result = await response.json();
+
+                if (result.error) {
+                    // Si l'erreur persiste, on l'affiche clairement
+                    chatBox.innerHTML += '<div class="msg ai" style="color:#f87171;">Google dit : ' + result.error.message + '</div>';
+                } else if (result.candidates && result.candidates[0].content) {
+                    var responseText = result.candidates[0].content.parts[0].text;
+                    chatBox.innerHTML += '<div class="msg ai">' + responseText + '</div>';
+                }
+            } catch (err) {
+                chatBox.innerHTML += '<div class="msg ai" style="color:#f87171;">Erreur de connexion. Vérifie ton VPN.</div>';
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        btnSend.onclick = function() {
+            if (inputField.value.toUpperCase() === 'RESET') {
+                localStorage.removeItem(storageName);
+                location.reload();
+                return;
+            }
+            callEos();
+        };
+
+        inputField.onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                if (inputField.value.toUpperCase() === 'RESET') {
+                    localStorage.removeItem(storageName);
+                    location.reload();
+                    return;
+                }
+                callEos();
+            }
+        };
+    </script>
+</body>
+</html>
