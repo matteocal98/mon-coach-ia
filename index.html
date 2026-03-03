@@ -22,33 +22,41 @@
         <button id="btn">Action</button>
     </div>
 
-    <script>
-        // METS TA CLÉ ICI
-        const API_KEY = "AIzaSyDfEHkt8kNfdwWvP7W4rM2ntfvM2GRTDF4"; 
+  <script>
+        const API_KEY = "AIzaSyDfEHkt8kNfdwWvP7W4rM2ntfvM2GRTDF4"; // Mets ta clé complète ici
 
         document.getElementById('btn').onclick = async () => {
             const input = document.getElementById('user-input');
             const chat = document.getElementById('chat');
-            const text = input.value;
+            const text = input.value.trim();
             if(!text) return;
 
             chat.innerHTML += `<div class="msg user">${text}</div>`;
             input.value = "";
 
-            // ON UTILISE LE MODÈLE LE PLUS STABLE POUR 2026
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+            // On utilise la route v1beta qui est souvent plus permissive
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "Réponds en tant que coach business : " + text }] }] })
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Réponds en tant que coach business : " + text }] }]
+                    })
                 });
+
                 const data = await response.json();
-                const aiText = data.candidates[0].content.parts[0].text;
-                chat.innerHTML += `<div class="msg ai">${aiText}</div>`;
+
+                if (data.error) {
+                    // C'est ici qu'on verra si c'est marqué "User location not supported"
+                    chat.innerHTML += `<div class="msg ai" style="color:#f87171;">Google dit : ${data.error.message}</div>`;
+                } else {
+                    const aiText = data.candidates[0].content.parts[0].text;
+                    chat.innerHTML += `<div class="msg ai">${aiText}</div>`;
+                }
             } catch (e) {
-                chat.innerHTML += `<div class="msg ai" style="color:red;">Erreur : Vérifie ta clé ou le modèle.</div>`;
+                chat.innerHTML += `<div class="msg ai" style="color:#f87171;">Erreur de connexion : Vérifie ton réseau.</div>`;
             }
             chat.scrollTop = chat.scrollHeight;
         };
