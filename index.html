@@ -1,0 +1,44 @@
+<script>
+    // 1. COLLEZ VOTRE CLÉ ICI
+    const API_KEY = AIzaSyDTmjKaBnoL-YMhejx2iu3w75RArFPrOoc; 
+
+    // 2. Configuration du coach
+    const systemInstruction = "Tu es Eos, mon coach personnel. Ta mission : m'aider à créer des revenus hors du marché calédonien pour réinvestir. Sois stratégique, direct et motivant.";
+
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const chat = document.getElementById('chat');
+        const userMsg = input.value;
+        if(!userMsg) return;
+
+        chat.innerHTML += `<div class="msg user">${userMsg}</div>`;
+        input.value = "";
+
+        // URL pour le modèle Gemini 1.5 Flash (rapide et gratuit)
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    "contents": [{
+                        "parts": [{
+                            "text": `${systemInstruction}\n\nUtilisateur: ${userMsg}`
+                        }]
+                    }]
+                })
+            });
+            
+            const data = await response.json();
+            const aiMsg = data.candidates[0].content.parts[0].text;
+            
+            chat.innerHTML += `<div class="msg ai">${aiMsg}</div>`;
+        } catch (error) {
+            chat.innerHTML += `<div class="msg ai" style="color:red;">Erreur : Vérifie ta clé API ou ta connexion.</div>`;
+            console.error(error);
+        }
+        
+        chat.scrollTop = chat.scrollHeight;
+    }
+</script>
