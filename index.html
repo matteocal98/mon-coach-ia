@@ -3,60 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EOS Coach</title>
+    <title>EOS Assistant</title>
     <style>
         body { font-family: sans-serif; background: #0f172a; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { padding: 15px; background: #1e293b; text-align: center; color: #10b981; font-weight: bold; border-bottom: 1px solid #334155; }
         #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px; border-radius: 10px; max-width: 80%; }
+        .msg { padding: 12px; border-radius: 12px; max-width: 85%; }
         .user { background: #3b82f6; align-self: flex-end; }
-        .ai { background: #334155; align-self: flex-start; }
+        .ai { background: #334155; align-self: flex-start; white-space: pre-wrap; }
         #input-area { display: flex; padding: 20px; background: #1e293b; gap: 10px; }
-        input { flex: 1; padding: 10px; border-radius: 5px; border: none; }
-        button { padding: 10px; background: #10b981; color: white; border: none; border-radius: 5px; }
+        input { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 16px; }
+        button { padding: 12px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="chat"><div class="msg ai">Eos est prêt, Mattéo. Quel est l'objectif ?</div></div>
+    <header>EOS | STRATÉGIE MATTÉO</header>
+    <div id="chat"><div class="msg ai">VPN activé. Je suis prêt, Mattéo. Quel est notre premier objectif de revenus ?</div></div>
     <div id="input-area">
-        <input type="text" id="user-input" placeholder="Ecris ici...">
-        <button id="btn">Action</button>
+        <input type="text" id="user-input" placeholder="Parle à Eos...">
+        <button id="btn">ACTION</button>
     </div>
 
-  <script>
-        const API_KEY = "AIzaSyDfEHkt8kNfdwWvP7W4rM2ntfvM2GRTDF4"; // Mets ta clé complète ici
+    <script>
+        // REMPLACE BIEN PAR TA CLÉ COMPLETE (Celle qui finit par TDF4)
+        const API_KEY = "AIzaSyDfEHkt8kNfdwWvP7W4rM2ntfvM2GRTDF4"; 
 
-        document.getElementById('btn').onclick = async () => {
-            const input = document.getElementById('user-input');
-            const chat = document.getElementById('chat');
+        const btn = document.getElementById('btn');
+        const input = document.getElementById('user-input');
+        const chat = document.getElementById('chat');
+
+        btn.onclick = async () => {
             const text = input.value.trim();
             if(!text) return;
 
             chat.innerHTML += `<div class="msg user">${text}</div>`;
             input.value = "";
+            chat.scrollTop = chat.scrollHeight;
 
-            // On utilise la route v1beta qui est souvent plus permissive
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+            // NOUVELLE URL 2026 : Modèle 2.0 Flash sur route v1beta
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Réponds en tant que coach business : " + text }] }]
+                        contents: [{ parts: [{ text: "Tu es Eos, coach business. Aide Mattéo à générer des revenus hors-Calédonie. Réponds à : " + text }] }]
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.error) {
-                    // C'est ici qu'on verra si c'est marqué "User location not supported"
                     chat.innerHTML += `<div class="msg ai" style="color:#f87171;">Google dit : ${data.error.message}</div>`;
                 } else {
                     const aiText = data.candidates[0].content.parts[0].text;
                     chat.innerHTML += `<div class="msg ai">${aiText}</div>`;
                 }
             } catch (e) {
-                chat.innerHTML += `<div class="msg ai" style="color:#f87171;">Erreur de connexion : Vérifie ton réseau.</div>`;
+                chat.innerHTML += `<div class="msg ai" style="color:#f87171;">Erreur de connexion. Garde ton VPN actif.</div>`;
             }
             chat.scrollTop = chat.scrollHeight;
         };
