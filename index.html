@@ -105,13 +105,12 @@
             
             if (!text) return;
 
-            // 1. Affichage message utilisateur
             chat.innerHTML += `<div class="msg user">${text}</div>`;
             input.value = "";
             chat.scrollTop = chat.scrollHeight;
 
-            // 2. URL de l'API (Version stable v1 avec Gemini 1.5 Pro)
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
+            // CONFIGURATION FLASH (La plus compatible)
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
             try {
                 const response = await fetch(url, {
@@ -134,20 +133,13 @@
                     const responseText = data.candidates[0].content.parts[0].text;
                     chat.innerHTML += `<div class="msg ai">${responseText}</div>`;
                 } else {
-                    chat.innerHTML += `<div class="msg ai">Eos n'a pas pu traiter la demande. Vérifie tes quotas ou la clé.</div>`;
+                    chat.innerHTML += `<div class="msg ai">Eos est en maintenance momentanée.</div>`;
                 }
             } catch (e) {
-                chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Désolé, problème de connexion réseau.</div>`;
+                chat.innerHTML += `<div class="msg ai" style="color:#ef4444;">Erreur réseau.</div>`;
             }
-            
             chat.scrollTop = chat.scrollHeight;
         }
-
-        // Touche Entrée pour envoyer
-        document.getElementById('user-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
         });
     </script>
 </body>
